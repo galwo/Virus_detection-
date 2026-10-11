@@ -1,0 +1,86 @@
+# =============================================================================
+# config.yaml — Mite Virome Pipeline
+# =============================================================================
+
+raw_data_dir: "/home/ARO.local/galw/Mite/raw_data"
+
+# ---------------------------------------------------------------------------
+# Host genomes — one per species
+# gtf is optional — leave as "" if not available
+# star_genomeSAindexNbases: min(14, floor(log2(genome_size)/2 - 1))
+#   NCa ~188Mb -> 11
+#   NCu ~173Mb -> 11
+# ---------------------------------------------------------------------------
+genomes:
+  Ca:
+    fasta:                    "/home/ARO.local/galw/Mite/genome/ncbi_dataset/data/GCA_028455905.1/GCA_028455905.1_GZU_Ncal_1.0_genomic.fna"   # GCA_028659XXX — 23 contigs, Nanopore
+    gtf:                      ""     # leave "" if absent
+    star_genomeSAindexNbases: 11
+  NC:
+    fasta:                    "/home/ARO.local/galw/Mite/genome/ncbi_dataset/data/GCA_021522715.1/GCA_021522715.1_PDT001225470.1_genomic.fna"   # Illumina, 1173 scaffolds
+    gtf:                      "/home/ARO.local/galw/Mite/genome/ncbi_dataset/data/GCA_021522715.1/genomic.gtf"                             # no GTF — leave empty
+    star_genomeSAindexNbases: 11
+
+# ---------------------------------------------------------------------------
+# rRNA reference — SILVA SSU + LSU combined
+# wget SILVA_138.1_LSURef_tax_silva.fasta.gz
+# wget SILVA_138.1_SSURef_NR99_tax_silva.fasta.gz
+# cat both | gunzip > rrna_combined.fasta
+# ---------------------------------------------------------------------------
+rrna_fasta: "/home/ARO.local/galw/Mite/Silva/rrna_combined.fasta"
+
+# ---------------------------------------------------------------------------
+# Kraken2 — prebuilt PlusPF
+# wget https://genome-idx.s3.amazonaws.com/kraken/k2_pluspf_20240904.tar.gz
+# tar -xzf k2_pluspf_20240904.tar.gz -C kraken2_db/
+# ---------------------------------------------------------------------------
+kraken2_db: "/home/ARO.local/galw/Mite/ncbi_taxonomy/kraken2_db/"
+
+# ---------------------------------------------------------------------------
+# DIAMOND protein db (VirJenDB 6-frame translated)
+# seqkit translate --frame 1,2,3,-1,-2,-3 --min-len 50 --trim \
+#     virjendb_rna_clustered.fasta > virjendb_6frame.faa
+# diamond makedb --in virjendb_6frame.faa --db virjendb_rna_clustered_prot --threads 16
+# ---------------------------------------------------------------------------
+diamond_db: "/home/ARO.local/galw/Mite/Virjen/virjendb_rna_clustered_prot.dmnd"
+
+# ---------------------------------------------------------------------------
+# BLASTn nucleotide db (VirJenDB nucleotides)
+# makeblastdb -in virjendb_rna_clustered.fasta -dbtype nucl \
+#     -out virjendb_rna_clustered_nucl -parse_seqids
+# ---------------------------------------------------------------------------
+#blast_db: "/path/to/virjendb_rna_clustered_nucl"
+
+# ---------------------------------------------------------------------------
+# NCBI taxonomy
+#
+# taxdump_dir — extract the tar FIRST, then point here:
+#   mkdir -p /path/to/taxdump
+#   tar -xf taxdump.tar -C /path/to/taxdump/
+#   -> taxdump_dir is the FOLDER containing names.dmp, nodes.dmp etc.
+#
+# prot_acc2taxid — keep gzipped, pipeline handles .gz:
+#   wget https://ftp.ncbi.nlm.nih.gov/pub/taxonomy/accession2taxid/prot.accession2taxid.FULL.gz
+# ---------------------------------------------------------------------------
+taxdump_dir:    "/home/ARO.local/galw/Mite/ncbi_taxonomy/taxdump/"
+prot_acc2taxid: "/home/ARO.local/galw/Mite/ncbi_taxonomy/prot.accession2taxid.FULL.gz"
+
+# ---------------------------------------------------------------------------
+# Trimming — increase clip_r1/r2 if FastQC shows 5-prime nucleotide bias
+# ---------------------------------------------------------------------------
+clip_r1: 0
+clip_r2: 0
+trim_galore_extra: "--quality 20 --length 50"
+
+# ---------------------------------------------------------------------------
+# DIAMOND
+# ---------------------------------------------------------------------------
+diamond_evalue:   "1e-5"
+diamond_max_hits: 10
+diamond_extra:    "--more-sensitive"
+
+# ---------------------------------------------------------------------------
+# BLASTn
+# ---------------------------------------------------------------------------
+blastn_evalue:   "1e-5"
+blastn_max_hits: 10
